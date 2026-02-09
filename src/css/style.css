@@ -1,3 +1,5 @@
+@import url('https://cdn.jsdelivr.net/npm/@vazirmatn/moon@latest/font-face.css');
+
 *{
     direction: rtl;
 }
@@ -55,11 +57,53 @@
   font-weight: 900;
   font-style: normal;
 }
-.accr {
-    overflow: hidden;
+.accr .content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 300ms ease;
 }
-.accr .content{
-    max-height: 0;
-    overflow: hidden;
+
+/* اسکرول‌بار منوی کناری */
+#menu::-webkit-scrollbar {
+  width: 6px;
 }
-/* یا اگر می‌خواهید دستی اضافه کنید، این کد را به style.css اضافه کنید */
+
+#menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#menu::-webkit-scrollbar-thumb {
+  background-color: rgba(69, 40, 41, 0.35);
+  /* هم‌رنگ سایت */
+  border-radius: 999px;
+}
+
+#menu::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(69, 40, 41, 0.6);
+}
+/* در فایل style.css */
+.min-h-0 {
+    min-height: 0;
+}
+
+.flex-1 {
+    flex: 1 1 0%;
+}
+
+.flex-shrink-0 {
+    flex-shrink: 0;
+}
+
+/* برای sticky header جدول */
+.sticky {
+    position: sticky;
+}
+
+.top-0 {
+    top: 0;
+}
+
+/* ارتفاع برای container اصلی */
+.h-full {
+    height: 100%;
+}

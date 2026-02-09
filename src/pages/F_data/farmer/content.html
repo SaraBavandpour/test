@@ -1,0 +1,193 @@
+<section id="farmer-page" data-title="ثبت کشاورز" data-breadcrumb="خانه / داده‌های اولیه / ثبت کشاورز"
+    class="max-w-7xl mx-auto">
+    
+    <!-- هدر صفحه -->
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+        <div>
+            <h3 class="text-lg vazirmatn-700 text-[#2B1B1B]">مدیریت کشاورزان</h3>
+            <p class="text-sm vazirmatn-400 text-black/60 mt-1">
+                مدیریت اطلاعات کشاورزان - می‌توانید کشاورز جدید ایجاد کنید، ویرایش یا حذف کنید.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <input type="text" 
+                    id="farmerSearch" 
+                    placeholder="جستجوی کشاورز..."
+                    class="min-w-64 py-2 px-4 pr-10 rounded-xl border border-black/10 bg-white/80 outline-0 focus:border-[#452829]/40 transition text-sm"
+                >
+                <svg class="absolute right-3 top-2.5 w-4 h-4 text-black/40" 
+                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
+                        stroke-width="1.5" d="M17 17l4 4M3 11a8 8 0 1016 0a8 8 0 00-16 0z"/>
+                </svg>
+            </div>
+            <button id="addFarmerBtn" 
+                class="py-2 px-4 rounded-xl bg-[#452829] text-[#F7F1DE] hover:opacity-90 transition text-sm flex items-center gap-2">
+                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
+                        stroke-width="1.5" d="M12 5v14m-7-7h14"/>
+                </svg>
+                کشاورز جدید
+            </button>
+        </div>
+    </div>
+
+    <!-- کارت آمار -->
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white/80 backdrop-blur rounded-xl border border-black/5 p-4">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-black/60">تعداد کشاورزان</span>
+                <span id="totalFarmersCount" class="text-xl vazirmatn-700 text-[#452829]">۰</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول -->
+    <div class="bg-white/80 backdrop-blur rounded-2xl border border-black/5 shadow-sm overflow-hidden">
+        <div class="px-4 py-3 border-b border-black/5 flex items-center justify-between">
+            <span class="text-sm vazirmatn-600 text-[#452829]">لیست کشاورزان</span>
+            <span id="farmerCount" class="text-xs text-black/50">۰ مورد</span>
+        </div>
+
+        <div class="overflow-x-auto max-h-[55vh] overflow-y-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-black/5">
+                    <tr class="text-right">
+                        <th class="px-4 py-3 vazirmatn-600 text-[#452829] whitespace-nowrap">نام و نام خانوادگی</th>
+                        <th class="px-4 py-3 vazirmatn-600 text-[#452829] whitespace-nowrap">کد ملی</th>
+                        <th class="px-4 py-3 vazirmatn-600 text-[#452829] whitespace-nowrap">نام پدر</th>
+                        <th class="px-4 py-3 vazirmatn-600 text-[#452829] whitespace-nowrap">شماره همراه</th>
+                        <th class="px-4 py-3 vazirmatn-600 text-[#452829] whitespace-nowrap">شماره شبا اول</th>
+                        <th class="px-4 py-3 vazirmatn-600 text-[#452829] whitespace-nowrap">عملیات</th>
+                    </tr>
+                </thead>
+
+                <tbody id="farmerTbody" class="divide-y divide-black/5">
+                    <!-- داده‌ها به صورت داینامیک پر می‌شود -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- صفحه‌بندی -->
+        <div class="px-4 py-3 border-t border-black/5 flex items-center justify-between">
+            <div class="text-xs text-black/50">
+                نمایش <span id="pageStart">۱</span> تا <span id="pageEnd">۱۰</span> از <span id="totalItems">۰</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="prevPage" class="p-1 rounded border border-black/10 hover:bg-black/5 disabled:opacity-40">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
+                            stroke-width="1.5" d="M15 6l-6 6l6 6"/>
+                    </svg>
+                </button>
+                <span id="currentPage" class="text-sm">۱</span>
+                <button id="nextPage" class="p-1 rounded border border-black/10 hover:bg-black/5 disabled:opacity-40">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
+                            stroke-width="1.5" d="M9 6l6 6l-6 6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- مودال - نسخه تک ستونی کاملاً فشرده -->
+<div id="farmerModal" class="fixed inset-0 bg-black/50 hidden z-50 items-center justify-center p-1">
+    <div class="bg-white rounded-md w-72 max-h-[70vh] overflow-y-auto">
+        <!-- هدر مودال -->
+        <div class="px-2 py-1.5 border-b border-black/10 flex items-center justify-between">
+            <h4 class="text-xs vazirmatn-600 text-[#2B1B1B]" id="modalTitle">کشاورز</h4>
+            <button id="closeModal" class="text-black/40 hover:text-black/60">
+                <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
+                        stroke-width="2.5" d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- بدنه مودال -->
+        <form id="farmerForm" class="p-2">
+            <input type="hidden" id="farmerId">
+            
+            <div class="space-y-1">
+                <!-- فیلدهای تک ستونی -->
+                <div>
+                    <label class="block text-[10px] mb-0.5 text-black/50">کد ملی</label>
+                    <input type="text" id="nationalId" required
+                        class="w-full py-0.5 px-1.5 text-xs rounded-sm border border-black/10 bg-white outline-0 focus:border-[#452829]/40">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] mb-0.5 text-black/50">نام</label>
+                    <input type="text" id="firstName" required
+                        class="w-full py-0.5 px-1.5 text-xs rounded-sm border border-black/10 bg-white outline-0 focus:border-[#452829]/40">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] mb-0.5 text-black/50">نام خانوادگی</label>
+                    <input type="text" id="lastName" required
+                        class="w-full py-0.5 px-1.5 text-xs rounded-sm border border-black/10 bg-white outline-0 focus:border-[#452829]/40">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] mb-0.5 text-black/50">نام کامل</label>
+                    <input type="text" id="fullName" required
+                        class="w-full py-0.5 px-1.5 text-xs rounded-sm border border-black/10 bg-white outline-0 focus:border-[#452829]/40">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] mb-0.5 text-black/50">نام پدر</label>
+                    <input type="text" id="fatherName" required
+                        class="w-full py-0.5 px-1.5 text-xs rounded-sm border border-black/10 bg-white outline-0 focus:border-[#452829]/40">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] mb-0.5 text-black/50">شماره همراه</label>
+                    <input type="tel" id="phoneNumber" required
+                        class="w-full py-0.5 px-1.5 text-xs rounded-sm border border-black/10 bg-white outline-0 focus:border-[#452829]/40">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] mb-0.5 text-black/50">شبا اول</label>
+                    <input type="text" id="shebaNumber1" required
+                        class="w-full py-0.5 px-1.5 text-xs rounded-sm border border-black/10 bg-white outline-0 focus:border-[#452829]/40">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] mb-0.5 text-black/50">شبا دوم</label>
+                    <input type="text" id="shebaNumber2"
+                        class="w-full py-0.5 px-1.5 text-xs rounded-sm border border-black/10 bg-white outline-0 focus:border-[#452829]/40">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] mb-0.5 text-black/50">شماره کارت</label>
+                    <input type="text" id="cardNumber"
+                        class="w-full py-0.5 px-1.5 text-xs rounded-sm border border-black/10 bg-white outline-0 focus:border-[#452829]/40">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] mb-0.5 text-black/50">آدرس</label>
+                    <textarea id="address" rows="1"
+                        class="w-full py-0.5 px-1.5 text-xs rounded-sm border border-black/10 bg-white outline-0 focus:border-[#452829]/40 resize-none"></textarea>
+                </div>
+            </div>
+            
+            <!-- دکمه‌ها -->
+            <div class="flex gap-1 mt-2 pt-2 border-t border-black/10">
+                <button type="submit" id="submitBtn"
+                    class="flex-1 py-1 text-[10px] rounded-sm bg-[#452829] text-[#F7F1DE] hover:opacity-90">
+                    ذخیره
+                </button>
+                <button type="button" id="cancelBtn"
+                    class="flex-1 py-1 text-[10px] rounded-sm border border-black/20 hover:bg-black/5">
+                    انصراف
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/js/pages/farmer.js" defer></script>
