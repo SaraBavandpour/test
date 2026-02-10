@@ -13,6 +13,13 @@ if (typeof window.__PROVINCE_LOADED === 'undefined') {
 
         if (!token) {
             console.warn("No access token in localStorage");
+            // استفاده از SweetAlert برای خطای عدم وجود توکن
+            await Swal.fire({
+                icon: 'warning',
+                title: 'خطای احراز هویت',
+                text: 'توکن دسترسی یافت نشد. لطفاً مجدداً وارد شوید.',
+                confirmButtonText: 'باشه'
+            });
             throw new Error("No token");
         }
 
@@ -27,6 +34,13 @@ if (typeof window.__PROVINCE_LOADED === 'undefined') {
 
         if (res.status === 401) {
             localStorage.removeItem(TOKEN_KEY);
+            // خطای 401 با SweetAlert
+            await Swal.fire({
+                icon: 'error',
+                title: 'دسترسی غیرمجاز',
+                text: 'جلسه شما منقضی شده است. لطفاً مجدداً وارد شوید.',
+                confirmButtonText: 'ورود مجدد'
+            });
             throw new Error("Unauthorized");
         }
 
@@ -125,31 +139,96 @@ if (typeof window.__PROVINCE_LOADED === 'undefined') {
                         const provinceName = e.target.dataset.province;
                         console.log(`🎯 کلیک روی حذف استان: ${provinceName}`);
                         
-                        if (!confirm(`آیا از حذف استان "${provinceName}" مطمئن هستید؟`)) return;
+                        // استفاده از SweetAlert برای تأیید حذف
+                        const result = await Swal.fire({
+                            title: 'آیا مطمئن هستید؟',
+                            text: `آیا از حذف استان "${provinceName}" مطمئن هستید؟`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'بله، حذف کن',
+                            cancelButtonText: 'لغو',
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            reverseButtons: true
+                        });
+
+                        if (!result.isConfirmed) return;
                         
                         try {
-                            const result = await apiDelete(provinceName);
-                            console.log(`✅ حذف موفق:`, result);
+                            const deleteResult = await apiDelete(provinceName);
+                            console.log(`✅ حذف موفق:`, deleteResult);
+                            
+                            // پیام موفقیت
+                            await Swal.fire({
+                                title: 'حذف شد!',
+                                text: `استان "${provinceName}" با موفقیت حذف شد.`,
+                                icon: 'success',
+                                confirmButtonText: 'باشه',
+                                timer: 2000
+                            });
+                            
                             await render(); // رندر مجدد بعد از حذف
                         } catch (error) {
                             console.error(`❌ خطا در حذف استان ${provinceName}:`, error);
+                            
+                            let errorMessage = '';
+                            let errorTitle = 'خطا!';
+                            
                             if (error.message.includes("404")) {
-                                alert(`استان "${provinceName}" پیدا نشد یا امکان حذف آن وجود ندارد.`);
+                                errorTitle = 'یافت نشد';
+                                errorMessage = `استان "${provinceName}" پیدا نشد یا امکان حذف آن وجود ندارد.`;
                             } else if (error.message.includes("409")) {
-                                alert(`استان "${provinceName}" در حال استفاده است و نمی‌توان آن را حذف کرد.`);
+                                errorTitle = 'در حال استفاده';
+                                errorMessage = `استان "${provinceName}" در حال استفاده است و نمی‌توان آن را حذف کرد.`;
+                            } else if (error.message.includes("Network Error")) {
+                                errorTitle = 'خطای شبکه';
+                                errorMessage = 'اتصال به سرور برقرار نشد. لطفاً اتصال اینترنت خود را بررسی کنید.';
+                            } else if (error.message.includes("Failed to fetch")) {
+                                errorTitle = 'خطای سرور';
+                                errorMessage = 'سرور پاسخ نمی‌دهد. لطفاً دوباره تلاش کنید.';
                             } else {
-                                alert(`خطا در حذف استان "${provinceName}": ${error.message}`);
+                                errorMessage = `خطا در حذف استان "${provinceName}": ${error.message}`;
                             }
+                            
+                            // نمایش خطا با SweetAlert
+                            await Swal.fire({
+                                title: errorTitle,
+                                text: errorMessage,
+                                icon: 'error',
+                                confirmButtonText: 'متوجه شدم',
+                                confirmButtonColor: '#d33'
+                            });
                         }
                     });
                 });
 
             } catch (e) {
                 console.error(e);
+                
+                // خطای کلی با SweetAlert
+                await Swal.fire({
+                    title: 'خطا در بارگذاری',
+                    text: 'در بارگذاری اطلاعات استان‌ها خطایی رخ داده است.',
+                    icon: 'error',
+                    confirmButtonText: 'تلاش مجدد',
+                    showCancelButton: true,
+                    cancelButtonText: 'بستن',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    preConfirm: () => {
+                        return render(); // تلاش مجدد برای رندر
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // رندر مجدد انجام می‌شود
+                    }
+                });
+                
+                // نمایش خطا در جدول
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="3" class="p-4 text-red-600 text-center">
-                            ${e.message}
+                            خطا در بارگذاری اطلاعات: ${e.message}
                         </td>
                     </tr>
                 `;
@@ -160,18 +239,100 @@ if (typeof window.__PROVINCE_LOADED === 'undefined') {
 
         addBtn.addEventListener("click", async () => {
             const provinceName = selectEl.value;
-            if (!provinceName) return alert("استان را انتخاب کنید");
+            
+            if (!provinceName) {
+                // خطای انتخاب استان
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'انتخاب استان',
+                    text: 'لطفاً نام استان را انتخاب کنید.',
+                    confirmButtonText: 'باشه',
+                    confirmButtonColor: '#3085d6'
+                });
+                return;
+            }
 
             try {
+                // بررسی تکراری نبودن استان
+                const existingProvinces = await apiGetAll();
+                const provinceExists = existingProvinces.some(item => {
+                    const existingName = item.province || item.name || item.province_name;
+                    return existingName === provinceName;
+                });
+                
+                if (provinceExists) {
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'استان تکراری',
+                        text: `استان "${provinceName}" قبلاً ثبت شده است.`,
+                        confirmButtonText: 'متوجه شدم',
+                        confirmButtonColor: '#f39c12'
+                    });
+                    return;
+                }
+                
+                // نمایش بارگیری
+                Swal.fire({
+                    title: 'در حال ایجاد استان...',
+                    text: 'لطفاً منتظر بمانید',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
                 await apiCreate(provinceName);
+                
+                // بستن loading و نمایش موفقیت
+                Swal.close();
+                await Swal.fire({
+                    title: 'موفقیت!',
+                    text: `استان "${provinceName}" با موفقیت ایجاد شد.`,
+                    icon: 'success',
+                    confirmButtonText: 'عالی!',
+                    confirmButtonColor: '#28a745',
+                    timer: 1500
+                });
+                
                 await render();
+                
             } catch (e) {
-                alert('خطا در ایجاد استان: ' + e.message);
+                // بستن loading در صورت خطا
+                Swal.close();
+                
+                let errorMessage = 'خطا در ایجاد استان: ' + e.message;
+                let errorTitle = 'خطا!';
+                
+                // تشخیص نوع خطا
+                if (e.message.includes("409")) {
+                    errorTitle = 'تکراری';
+                    errorMessage = `استان "${provinceName}" قبلاً ثبت شده است.`;
+                } else if (e.message.includes("Network Error")) {
+                    errorTitle = 'خطای شبکه';
+                    errorMessage = 'اتصال به سرور برقرار نشد. لطفاً اتصال اینترنت خود را بررسی کنید.';
+                } else if (e.message.includes("Failed to fetch")) {
+                    errorTitle = 'خطای سرور';
+                    errorMessage = 'سرور پاسخ نمی‌دهد. لطفاً دوباره تلاش کنید.';
+                }
+                
+                await Swal.fire({
+                    title: errorTitle,
+                    text: errorMessage,
+                    icon: 'error',
+                    confirmButtonText: 'متوجه شدم',
+                    confirmButtonColor: '#d33'
+                });
             }
         });
 
         // رندر اولیه
         render();
+        
+        // اضافه کردن event برای تلاش مجدد در صورت خطا
+        const retryButton = page.querySelector("#retryBtn");
+        if (retryButton) {
+            retryButton.addEventListener("click", render);
+        }
     }
 
     window.setupProvincePage = setupProvincePage;
