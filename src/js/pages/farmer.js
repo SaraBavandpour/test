@@ -4,7 +4,7 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
     window.__FARMER_LOADED = true;
     
     const API_BASE = "https://edu-api.havirkesht.ir";
-    authFetch("/farmer/?page=1&size=10");
+    
 
     const TOKEN_KEY = "access_token";
 
