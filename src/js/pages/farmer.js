@@ -3,6 +3,8 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
     window.__FARMER_LOADED = true;
     
     const API_BASE = "https://edu-api.havirkesht.ir";
+    authFetch("/farmer/?page=1&size=10");
+
     const TOKEN_KEY = "access_token";
 
     async function authFetch(path, options = {}) {
@@ -48,7 +50,6 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
         const countEl = page.querySelector("#farmerCount");
         const totalCountEl = page.querySelector("#totalFarmersCount");
         const searchInput = page.querySelector("#farmerSearch");
-        const searchBtn = page.querySelector("#searchBtn");
         const addBtn = page.querySelector("#addFarmerBtn");
         
         // صفحه‌بندی
@@ -59,17 +60,13 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
         const pageEndEl = page.querySelector("#pageEnd");
         const totalItemsEl = page.querySelector("#totalItems");
 
-        if (!tbody || !countEl || !searchInput || !searchBtn || !addBtn) {
-            console.error("❌ برخی المان‌های ضروری یافت نشدند");
-            return;
-        }
+        if (!tbody || !countEl || !searchInput || !addBtn) return;
 
         // متغیرهای حالت
         let currentPage = 1;
         let pageSize = 10;
         let totalItems = 0;
         let searchQuery = "";
-        
         const mainContainer = document.getElementById("page-container");
         if (mainContainer) {
             mainContainer.style.height = "calc(100vh - 120px)";
@@ -77,35 +74,18 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
             mainContainer.classList.add("overflow-y-auto");
         }
 
+
+
+
+
         /* ===================== API FUNCTIONS ===================== */
 
         const apiGetAll = async (page = 1, size = 10) => {
-            try {
-                const q = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : "";
-                const url = `/api/farmer/?page=${page}&size=${size}${q}`;
-                console.log(`📡 درخواست API: ${url}`);
-                
-                const res = await authFetch(url);
-                
-                if (!res.ok) {
-                    throw new Error(`API Error: ${res.status} ${res.statusText}`);
-                }
-                
-                const data = await res.json();
-                
-                console.log(`📊 پاسخ API:`, {
-                    page: page,
-                    size: size,
-                    total: data.total || 0,
-                    itemsCount: data.items?.length || 0
-                });
-                
-                return data;
-            } catch (error) {
-                console.error("❌ خطا در apiGetAll:", error);
-                throw error;
-            }
+            const q = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : "";
+            const res = await authFetch(`/api/farmer/?page=${page}&size=${size}${q}`);
+            return res.json();
         };
+
 
         const apiGetByNationalId = async (nationalId) => {
             const res = await authFetch(`/api/farmer/${nationalId}`);
@@ -117,6 +97,7 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
                 method: "POST",
                 body: JSON.stringify(farmerData),
             });
+
             return res.json();
         };
         
@@ -125,6 +106,7 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
                 method: "PUT",
                 body: JSON.stringify(farmerData),
             });
+
             return res.json();
         };
         
@@ -140,13 +122,9 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
 
         const render = async () => {
             try {
-                console.log(`🔄 رندر صفحه ${currentPage} با ${pageSize} آیتم`);
-                
                 const data = await apiGetAll(currentPage, pageSize);
                 const items = data.items || [];
                 totalItems = data.total || 0;
-
-                console.log(`📊 آمار: ${totalItems} کل آیتم، ${items.length} در این صفحه`);
 
                 // آپدیت آمار
                 if (totalCountEl) totalCountEl.textContent = totalItems.toLocaleString('fa-IR');
@@ -161,22 +139,9 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
                 if (totalItemsEl) totalItemsEl.textContent = totalItems;
                 if (currentPageEl) currentPageEl.textContent = currentPage;
                 
-                // محاسبه آخرین صفحه
-                const lastPage = Math.ceil(totalItems / pageSize);
-                console.log(`📄 آخرین صفحه: ${lastPage}, صفحه جاری: ${currentPage}`);
-                
                 // فعال/غیرفعال کردن دکمه‌های صفحه‌بندی
-                if (prevBtn) {
-                    const isFirstPage = currentPage === 1;
-                    prevBtn.disabled = isFirstPage;
-                    console.log(`◀️ دکمه قبلی: ${isFirstPage ? 'غیرفعال' : 'فعال'}`);
-                }
-                
-                if (nextBtn) {
-                    const isLastPage = currentPage >= lastPage;
-                    nextBtn.disabled = isLastPage;
-                    console.log(`▶️ دکمه بعدی: ${isLastPage ? 'غیرفعال' : 'فعال'}`);
-                }
+                if (prevBtn) prevBtn.disabled = currentPage === 1;
+                if (nextBtn) nextBtn.disabled = currentPage * pageSize >= totalItems;
 
                 if (!items || !items.length) {
                     tbody.innerHTML = `
@@ -255,11 +220,11 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
                 });
 
             } catch (e) {
-                console.error("❌ خطا در رندر:", e);
+                console.error(e);
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="6" class="p-4 text-red-600 text-center">
-                            خطا در بارگذاری داده‌ها: ${e.message}
+                            ${e.message}
                         </td>
                     </tr>
                 `;
@@ -286,7 +251,6 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
                 if (!confirm(`آیا از حذف کشاورز "${farmerName}" مطمئن هستید؟`)) return;
                 
                 await apiDelete(nationalId);
-                alert("کشاورز با موفقیت حذف شد");
                 await render();
             } catch (error) {
                 console.error(`❌ خطا در حذف کشاورز ${nationalId}:`, error);
@@ -330,10 +294,7 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
                 
                 // ریست فرم
                 const form = document.querySelector("#farmerForm");
-                if (form) {
-                    form.reset();
-                    document.getElementById("farmerId").value = "";
-                }
+                if (form) form.reset();
             }
 
             // نمایش مودال
@@ -346,39 +307,20 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
             if (modal) {
                 modal.classList.add("hidden");
                 modal.classList.remove("flex");
-                
-                // ریست فرم
-                const form = document.querySelector("#farmerForm");
-                if (form) {
-                    form.reset();
-                    document.getElementById("farmerId").value = "";
-                }
             }
         };
 
         /* ===================== EVENT LISTENERS ===================== */
 
-        // جستجو با دکمه
-        searchBtn.addEventListener("click", () => {
+        // جستجو
+
+        searchInput.addEventListener("input", () => {
             searchQuery = searchInput.value.trim();
             currentPage = 1;
-            console.log(`🔍 جستجو با عبارت: "${searchQuery}"`);
             render();
         });
-
-        // جستجو با Enter
-        searchInput.addEventListener("keypress", (e) => {
-            if (e.key === 'Enter') {
-                searchQuery = searchInput.value.trim();
-                currentPage = 1;
-                console.log(`🔍 جستجو (Enter) با عبارت: "${searchQuery}"`);
-                render();
-            }
-        });
-
         // اضافه کردن کشاورز جدید
         addBtn.addEventListener("click", () => {
-            console.log("➕ ایجاد کشاورز جدید");
             openFarmerModal();
         });
 
@@ -387,7 +329,6 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
             prevBtn.addEventListener("click", () => {
                 if (currentPage > 1) {
                     currentPage--;
-                    console.log(`◀️ رفتن به صفحه: ${currentPage}`);
                     render();
                 }
             });
@@ -395,10 +336,8 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
 
         if (nextBtn) {
             nextBtn.addEventListener("click", () => {
-                const maxPage = Math.ceil(totalItems / pageSize);
-                if (currentPage < maxPage) {
+                if (currentPage * pageSize < totalItems) {
                     currentPage++;
-                    console.log(`▶️ رفتن به صفحه: ${currentPage}`);
                     render();
                 }
             });
@@ -450,11 +389,9 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
 
                 try {
                     if (isEditing) {
-                        console.log(`✏️ بروزرسانی کشاورز: ${nationalId}`);
                         await apiUpdate(nationalId, farmerData);
                         alert("کشاورز با موفقیت بروزرسانی شد");
                     } else {
-                        console.log(`📝 ایجاد کشاورز جدید`);
                         await apiCreate(farmerData);
                         alert("کشاورز با موفقیت ایجاد شد");
                     }
@@ -462,14 +399,13 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
                     closeFarmerModal();
                     await render();
                 } catch (error) {
-                    console.error('❌ خطا در ذخیره کشاورز:', error);
+                    console.error('خطا در ذخیره کشاورز:', error);
                     alert('خطا در ذخیره کشاورز: ' + error.message);
                 }
             });
         }
 
         // رندر اولیه
-        console.log("🚀 شروع رندر اولیه");
         render();
     }
 
