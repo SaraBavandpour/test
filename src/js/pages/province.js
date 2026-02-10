@@ -93,6 +93,19 @@ if (typeof window.__PROVINCE_LOADED === 'undefined') {
             const res = await authFetch(`/api/province/${encodeURIComponent(provinceName)}`, {
                 method: "DELETE",
             });
+            
+            // بررسی خطای سرور
+            if (!res.ok) {
+                let errorMsg = "خطا در حذف استان";
+                try {
+                    const errorData = await res.json();
+                    errorMsg = errorData.detail || errorData.message || errorMsg;
+                } catch {
+                    errorMsg = `خطای ${res.status} از سرور`;
+                }
+                throw new Error(errorMsg);
+            }
+            
             return res.json();
         };
 
@@ -158,46 +171,54 @@ if (typeof window.__PROVINCE_LOADED === 'undefined') {
                             const deleteResult = await apiDelete(provinceName);
                             console.log(`✅ حذف موفق:`, deleteResult);
                             
-                            // پیام موفقیت
+                            // پیام موفقیت - فقط اگر خطایی نبود
                             await Swal.fire({
                                 title: 'حذف شد!',
                                 text: `استان "${provinceName}" با موفقیت حذف شد.`,
                                 icon: 'success',
                                 confirmButtonText: 'باشه',
-                                timer: 2000
+                                timer: 2000,
+                                timerProgressBar: true
                             });
                             
                             await render(); // رندر مجدد بعد از حذف
                         } catch (error) {
                             console.error(`❌ خطا در حذف استان ${provinceName}:`, error);
                             
-                            let errorMessage = '';
-                            let errorTitle = 'خطا!';
-                            
-                            if (error.message.includes("404")) {
-                                errorTitle = 'یافت نشد';
-                                errorMessage = `استان "${provinceName}" پیدا نشد یا امکان حذف آن وجود ندارد.`;
+                            // بررسی خطای خاص 500
+                            if (error.message.includes("خطای 500") || error.message.includes("خطا در حذف استان")) {
+                                await Swal.fire({
+                                    title: 'خطا در حذف',
+                                    html: `استان "<b>${provinceName}</b>" قابل حذف نیست.<br><br>
+                                    <small style="color: #666;">علت: این استان احتمالاً در حال استفاده است یا مشکلی در سرور وجود دارد.</small>`,
+                                    icon: 'error',
+                                    confirmButtonText: 'متوجه شدم',
+                                    confirmButtonColor: '#d33',
+                                    width: '450px'
+                                });
+                            } else if (error.message.includes("404")) {
+                                await Swal.fire({
+                                    title: 'یافت نشد',
+                                    text: `استان "${provinceName}" پیدا نشد.`,
+                                    icon: 'warning',
+                                    confirmButtonText: 'باشه'
+                                });
                             } else if (error.message.includes("409")) {
-                                errorTitle = 'در حال استفاده';
-                                errorMessage = `استان "${provinceName}" در حال استفاده است و نمی‌توان آن را حذف کرد.`;
-                            } else if (error.message.includes("Network Error")) {
-                                errorTitle = 'خطای شبکه';
-                                errorMessage = 'اتصال به سرور برقرار نشد. لطفاً اتصال اینترنت خود را بررسی کنید.';
-                            } else if (error.message.includes("Failed to fetch")) {
-                                errorTitle = 'خطای سرور';
-                                errorMessage = 'سرور پاسخ نمی‌دهد. لطفاً دوباره تلاش کنید.';
+                                await Swal.fire({
+                                    title: 'در حال استفاده',
+                                    text: `استان "${provinceName}" در حال استفاده است و نمی‌توان آن را حذف کرد.`,
+                                    icon: 'warning',
+                                    confirmButtonText: 'متوجه شدم'
+                                });
                             } else {
-                                errorMessage = `خطا در حذف استان "${provinceName}": ${error.message}`;
+                                // خطای عمومی
+                                await Swal.fire({
+                                    title: 'خطا',
+                                    text: `خطا در حذف استان "${provinceName}": ${error.message}`,
+                                    icon: 'error',
+                                    confirmButtonText: 'باشه'
+                                });
                             }
-                            
-                            // نمایش خطا با SweetAlert
-                            await Swal.fire({
-                                title: errorTitle,
-                                text: errorMessage,
-                                icon: 'error',
-                                confirmButtonText: 'متوجه شدم',
-                                confirmButtonColor: '#d33'
-                            });
                         }
                     });
                 });
@@ -291,7 +312,8 @@ if (typeof window.__PROVINCE_LOADED === 'undefined') {
                     icon: 'success',
                     confirmButtonText: 'عالی!',
                     confirmButtonColor: '#28a745',
-                    timer: 1500
+                    timer: 1500,
+                    timerProgressBar: true
                 });
                 
                 await render();
