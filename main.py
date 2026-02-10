@@ -21,12 +21,14 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # در حالت توسعه، در production محدود کن
+    allow_origins=[
+        "https://frontend.havirkesht.ir",
+        "https://havir-sara.liara.run",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/static", StaticFiles(directory="src"), name="static")
 
 EDU_API_URL = "http://edu-api.havirkesht.ir"
 EDU_USERNAME = "edu_40111415016"

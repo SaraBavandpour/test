@@ -107,3 +107,13 @@
 .h-full {
     height: 100%;
 }
+/* در فایل CSS یا تگ style */
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+#prevPage:disabled svg,
+#nextPage:disabled svg {
+    stroke: #9CA3AF;
+}

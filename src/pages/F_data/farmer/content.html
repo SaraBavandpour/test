@@ -17,11 +17,12 @@
                     placeholder="جستجوی کشاورز..."
                     class="min-w-64 py-2 px-4 pr-10 rounded-xl border border-black/10 bg-white/80 outline-0 focus:border-[#452829]/40 transition text-sm"
                 >
-                <svg class="absolute right-3 top-2.5 w-4 h-4 text-black/40" 
-                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
-                        stroke-width="1.5" d="M17 17l4 4M3 11a8 8 0 1016 0a8 8 0 00-16 0z"/>
-                </svg>
+                <button id="searchBtn" class="absolute right-3 top-2.5 w-4 h-4 text-black/40 hover:text-[#452829]">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+                         stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+                        <path d="M17 17l4 4M3 11a8 8 0 1016 0a8 8 0 00-16 0z"/>
+                    </svg>
+                </button>
             </div>
             <button id="addFarmerBtn" 
                 class="py-2 px-4 rounded-xl bg-[#452829] text-[#F7F1DE] hover:opacity-90 transition text-sm flex items-center gap-2">
@@ -76,14 +77,14 @@
                 نمایش <span id="pageStart">۱</span> تا <span id="pageEnd">۱۰</span> از <span id="totalItems">۰</span>
             </div>
             <div class="flex items-center gap-2">
-                <button id="prevPage" class="p-1 rounded border border-black/10 hover:bg-black/5 disabled:opacity-40">
+                <button id="prevPage" class="p-1 rounded border border-black/10 hover:bg-black/5 disabled:opacity-40 disabled:cursor-not-allowed">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
                             stroke-width="1.5" d="M15 6l-6 6l6 6"/>
                     </svg>
                 </button>
                 <span id="currentPage" class="text-sm">۱</span>
-                <button id="nextPage" class="p-1 rounded border border-black/10 hover:bg-black/5 disabled:opacity-40">
+                <button id="nextPage" class="p-1 rounded border border-black/10 hover:bg-black/5 disabled:opacity-40 disabled:cursor-not-allowed">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
                             stroke-width="1.5" d="M9 6l6 6l-6 6"/>

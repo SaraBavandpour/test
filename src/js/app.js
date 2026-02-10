@@ -95,12 +95,12 @@ class SPARouter {
         this.container = document.querySelector("#page-container > .max-w-6xl");
 
         this.pages = {
-            login: "/static/pages/login.html",
-            dashboard: "/static/pages/dashboard/content.html",
-            "F_data/crop-year": "/static/pages/F_data/crop-year/content.html",
-            "F_data/province": "/static/pages/F_data/province/content.html",
-            "F_data/city": "/static/pages/F_data/city/content.html",
-            "F_data/farmer": "/static/pages/F_data/farmer/content.html",
+            login: "/src/pages/login.html",
+            dashboard: "/src/pages/dashboard/content.html",
+            "F_data/crop-year": "/src/pages/F_data/crop-year/content.html",
+            "F_data/province": "/src/pages/F_data/province/content.html",
+            "F_data/city": "/src/pages/F_data/city/content.html",
+            "F_data/farmer": "/src/pages/F_data/farmer/content.html",
         };
 
         this.currentPage = null;
