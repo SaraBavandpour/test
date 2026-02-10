@@ -11,7 +11,10 @@ const TOKEN_KEY = "access_token";
 /* ===================== AUTH FETCH ===================== */
 
 async function authFetch(path, options = {}) {
+    console.log("➡️ FETCH:", API_BASE + path);
+
     const token = localStorage.getItem(TOKEN_KEY);
+    console.log("🔑 TOKEN:", token);
 
     if (!token) {
         throw new Error("توکن ورود یافت نشد");
@@ -26,17 +29,27 @@ async function authFetch(path, options = {}) {
         },
     });
 
+    console.log("⬅️ STATUS:", res.status);
+
+    const text = await res.text();
+    console.log("⬅️ RAW RESPONSE:", text);
+
     if (!res.ok) {
         let msg = "خطای سرور";
         try {
-            const err = await res.json();
+            const err = JSON.parse(text);
             msg = err.detail || msg;
         } catch {}
         throw new Error(msg);
     }
 
-    return res.json();
+    try {
+        return JSON.parse(text);
+    } catch {
+        throw new Error("پاسخ JSON نیست");
+    }
 }
+
 
 /* ===================== API ===================== */
 
