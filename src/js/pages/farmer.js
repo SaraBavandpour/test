@@ -3,7 +3,6 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
     window.__FARMER_LOADED = true;
     
     const API_BASE = "https://edu-api.havirkesht.ir";
-    authFetch("api/farmer/");
 
     const TOKEN_KEY = "access_token";
 
@@ -80,9 +79,9 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
 
         /* ===================== API FUNCTIONS ===================== */
 
-        const apiGetAll = async (page = 1, size = 10) => {
+        const apiGetAll = async () => {
             const q = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : "";
-            const res = await authFetch(`/api/farmer/?page=${page}&size=${size}${q}`);
+            const res = await authFetch(`/api/farmer/${q}`);
             return res.json();
         };
 
@@ -122,9 +121,9 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
 
         const render = async () => {
             try {
-                const data = await apiGetAll(currentPage, pageSize);
-                const items = data.items || [];
-                totalItems = data.total || 0;
+                const data = await apiGetAll();
+                const items =  Array.isArray(data) ? data : [];
+                totalItems = totalItems = items.length;
 
                 // آپدیت آمار
                 if (totalCountEl) totalCountEl.textContent = totalItems.toLocaleString('fa-IR');
@@ -389,6 +388,7 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
 
                 try {
                     if (isEditing) {
+                        delete farmerData.national_id;
                         await apiUpdate(nationalId, farmerData);
                         alert("کشاورز با موفقیت بروزرسانی شد");
                     } else {

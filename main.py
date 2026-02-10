@@ -490,13 +490,14 @@ class FarmerUpdate(BaseModel):
 # ==================== API ENDPOINTS FOR FARMER ====================
 
 @app.get("/api/farmer/")
-async def get_farmers(token: str = Depends(get_current_token)):
+async def get_farmers(search: str | None = None,token: str = Depends(get_current_token)):
     """دریافت لیست تمام کشاورزان"""
     try:
         data = await make_edu_request(
             method="GET",
             path="/farmer/",
-            token=token
+            token=token,
+            search= search
         )
         return data
     except HTTPException:
