@@ -88,7 +88,7 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
         /* ===================== API FUNCTIONS ===================== */
 
         const apiGetAll = async () => {
-            const res = await authFetch("/api/farmer/");
+            const res = await authFetch("/farmer/");
             const data = await res.json();
             
             // بررسی ساختار پاسخ
@@ -114,12 +114,12 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
         };
 
         const apiGetByNationalId = async (nationalId) => {
-            const res = await authFetch(`/api/farmer/${nationalId}`);
+            const res = await authFetch(`/farmer/${nationalId}`);
             return res.json();
         };
 
         const apiCreate = async (farmerData) => {
-            const res = await authFetch("/api/farmer/", {
+            const res = await authFetch("/farmer/", {
                 method: "POST",
                 body: JSON.stringify(farmerData),
             });
@@ -130,7 +130,7 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
             // حذف national_id از داده‌های ارسالی چون در URL هست
             const { national_id, ...updateData } = farmerData;
             
-            const res = await authFetch(`/api/farmer/${nationalId}`, {
+            const res = await authFetch(`/farmer/${nationalId}`, {
                 method: "PUT",
                 body: JSON.stringify(updateData),
             });
@@ -139,7 +139,7 @@ if (typeof window.__FARMER_LOADED === 'undefined') {
         
         const apiDelete = async (nationalId) => {
             console.log(`🗑️ درخواست حذف کشاورز: ${nationalId}`);
-            const res = await authFetch(`/api/farmer/${nationalId}`, {
+            const res = await authFetch(`/farmer/${nationalId}`, {
                 method: "DELETE",
             });
             return res.json();
