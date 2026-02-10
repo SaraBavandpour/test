@@ -1,33 +1,3 @@
-const API_BASE = "http://127.0.0.1:8000";
-const TOKEN_KEY = "access_token";
-
-async function authFetch(path, options = {}) {
-    const token = localStorage.getItem(TOKEN_KEY);
-
-    if (!token) {
-        console.warn("No access token in localStorage");
-        throw new Error("No token");
-    }
-
-    const res = await fetch(`${API_BASE}${path}`, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-            Authorization: `Bearer ${token}`,
-        },
-    });
-
-    if (res.status === 401) {
-        localStorage.removeItem(TOKEN_KEY);
-        throw new Error("Unauthorized");
-    }
-
-    return res;
-}
-
-/* ===================== PAGE SETUP ===================== */
-
 function setupCropYearPage() {
     console.log("📅 صفحه سال زراعی راه‌اندازی شد");
 
@@ -49,26 +19,27 @@ function setupCropYearPage() {
 
     /* ===================== POPULATE YEARS IN SELECT ===================== */
     const populateYearSelect = () => {
-        // حذف گزینه‌های موجود
         selectEl.innerHTML = '';
         
-        // سال جاری شمسی
-        const currentShamsiYear = 1403; // اینجا می‌توانید از کتابخانه‌ای برای تاریخ شمسی استفاده کنید
-        // یا به صورت دستی:
-        // const currentGregorianYear = new Date().getFullYear();
-        // const currentShamsiYear = gregorianToJalali(currentGregorianYear).year;
+        const currentShamsiYear = 1403;
         
-        // اضافه کردن ۵ سال گذشته و ۵ سال آینده
+        // فقط سال‌های قبل از 1403 و بعد از 1404
         for (let i = -5; i <= 5; i++) {
             const year = currentShamsiYear + i;
+            
+            // رد کردن سال‌های 1403 و 1404
+            if (year === 1403 || year === 1404) continue;
+            
             const option = document.createElement('option');
             option.value = year;
             option.textContent = year;
             selectEl.appendChild(option);
         }
         
-        // انتخاب سال جاری به عنوان پیش‌فرض
-        selectEl.value = currentShamsiYear;
+        // انتخاب اولین گزینه به عنوان پیش‌فرض
+        if (selectEl.options.length > 0) {
+            selectEl.value = selectEl.options[0].value;
+        }
     };
 
     // فراخوانی تابع برای پر کردن select
@@ -120,17 +91,23 @@ function setupCropYearPage() {
                 return;
             }
 
+            // فیلتر کردن: نمایش همه سال‌ها اما غیرفعال کردن دکمه حذف برای 1403 و 1404
             tbody.innerHTML = items.map(item => {
                 const yearName = item.crop_year_name;
+                const isProtected = yearName === "1403" || yearName === "1404";
+                
                 return `
                 <tr>
-                    <td class="px-4 py-3">${item.crop_year_name || '—'}</td>
+                    <td class="px-4 py-3">${yearName || '—'}</td>
                     <td class="px-4 py-3">${item.created_at || "—"}</td>
                     <td class="px-4 py-3">
-                        <button data-year="${yearName}" 
-                                class="delete-btn px-3 py-1 text-sm bg-red-100 text-red-600 hover:bg-red-200 rounded">
-                            حذف
-                        </button>
+                        ${isProtected ? 
+                            `<span class="px-3 py-1 text-sm bg-gray-100 text-gray-400 rounded cursor-not-allowed">غیرقابل حذف</span>` :
+                            `<button data-year="${yearName}" 
+                                    class="delete-btn px-3 py-1 text-sm bg-red-100 text-red-600 hover:bg-red-200 rounded">
+                                حذف
+                            </button>`
+                        }
                     </td>
                 </tr>
                 `;
@@ -144,20 +121,63 @@ function setupCropYearPage() {
                     const yearName = e.target.dataset.year;
                     console.log(`🎯 کلیک روی حذف سال: ${yearName}`);
                     
-                    if (!confirm(`آیا از حذف سال زراعی "${yearName}" مطمئن هستید؟`)) return;
-                    
-                    try {
-                        const result = await apiDelete(yearName);
-                        console.log(`✅ حذف موفق:`, result);
-                        await render(); // رندر مجدد بعد از حذف
-                    } catch (error) {
-                        console.error(`❌ خطا در حذف سال ${yearName}:`, error);
-                        if (error.message.includes("404")) {
-                            alert(`سال "${yearName}" پیدا نشد یا امکان حذف آن وجود ندارد.`);
-                        } else if (error.message.includes("409")) {
-                            alert(`سال "${yearName}" در حال استفاده است و نمی‌توان آن را حذف کرد.`);
-                        } else {
-                            alert(`خطا در حذف سال "${yearName}": ${error.message}`);
+                    // استفاده از SweetAlert2 برای تأیید حذف
+                    const result = await Swal.fire({
+                        title: 'آیا مطمئن هستید؟',
+                        text: `آیا از حذف سال زراعی "${yearName}" مطمئن هستید؟`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'بله، حذف کن',
+                        cancelButtonText: 'لغو',
+                        customClass: {
+                            confirmButton: 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded',
+                            cancelButton: 'bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2'
+                        },
+                        buttonsStyling: false,
+                        reverseButtons: true
+                    });
+
+                    if (result.isConfirmed) {
+                        try {
+                            const deleteResult = await apiDelete(yearName);
+                            console.log(`✅ حذف موفق:`, deleteResult);
+                            
+                            // پیام موفقیت SweetAlert2
+                            await Swal.fire({
+                                title: 'حذف شد!',
+                                text: `سال زراعی "${yearName}" با موفقیت حذف شد.`,
+                                icon: 'success',
+                                confirmButtonText: 'باشه',
+                                customClass: {
+                                    confirmButton: 'bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded'
+                                },
+                                buttonsStyling: false
+                            });
+                            
+                            await render(); // رندر مجدد بعد از حذف
+                        } catch (error) {
+                            console.error(`❌ خطا در حذف سال ${yearName}:`, error);
+                            
+                            let errorMessage = '';
+                            if (error.message.includes("404")) {
+                                errorMessage = `سال "${yearName}" پیدا نشد یا امکان حذف آن وجود ندارد.`;
+                            } else if (error.message.includes("409")) {
+                                errorMessage = `سال "${yearName}" در حال استفاده است و نمی‌توان آن را حذف کرد.`;
+                            } else {
+                                errorMessage = `خطا در حذف سال "${yearName}": ${error.message}`;
+                            }
+                            
+                            // نمایش خطا با SweetAlert2
+                            await Swal.fire({
+                                title: 'خطا!',
+                                text: errorMessage,
+                                icon: 'error',
+                                confirmButtonText: 'متوجه شدم',
+                                customClass: {
+                                    confirmButton: 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded'
+                                },
+                                buttonsStyling: false
+                            });
                         }
                     }
                 });
@@ -179,13 +199,87 @@ function setupCropYearPage() {
 
     addBtn.addEventListener("click", async () => {
         const year = selectEl.value;
-        if (!year) return alert("سال را انتخاب کنید");
+        
+        // بررسی اینکه سال 1403 یا 1404 نباشد
+        if (year === "1403" || year === "1404") {
+            await Swal.fire({
+                title: 'غیرمجاز!',
+                text: `امکان اضافه کردن سال ${year} وجود ندارد.`,
+                icon: 'error',
+                confirmButtonText: 'متوجه شدم',
+                customClass: {
+                    confirmButton: 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded'
+                },
+                buttonsStyling: false
+            });
+            return;
+        }
+        
+        if (!year) {
+            await Swal.fire({
+                title: 'توجه!',
+                text: 'لطفاً سال را انتخاب کنید',
+                icon: 'warning',
+                confirmButtonText: 'باشه',
+                customClass: {
+                    confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded'
+                },
+                buttonsStyling: false
+            });
+            return;
+        }
 
         try {
+            // بررسی تکراری نبودن سال
+            const existingYears = await apiGetAll();
+            const yearExists = existingYears.some(item => item.crop_year_name === year);
+            
+            if (yearExists) {
+                await Swal.fire({
+                    title: 'سال تکراری!',
+                    text: `سال زراعی ${year} قبلاً ثبت شده است.`,
+                    icon: 'warning',
+                    confirmButtonText: 'باشه',
+                    customClass: {
+                        confirmButton: 'bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded'
+                    },
+                    buttonsStyling: false
+                });
+                return;
+            }
+            
             await apiCreate(year);
+            
+            // پیام موفقیت
+            await Swal.fire({
+                title: 'موفق!',
+                text: `سال زراعی ${year} با موفقیت ایجاد شد.`,
+                icon: 'success',
+                confirmButtonText: 'باشه',
+                customClass: {
+                    confirmButton: 'bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded'
+                },
+                buttonsStyling: false
+            });
+            
             await render();
+            
+            // ریست کردن select به اولین گزینه
+            if (selectEl.options.length > 0) {
+                selectEl.value = selectEl.options[0].value;
+            }
+            
         } catch (e) {
-            alert('خطا در ایجاد سال زراعی: ' + e.message);
+            await Swal.fire({
+                title: 'خطا!',
+                text: 'خطا در ایجاد سال زراعی: ' + e.message,
+                icon: 'error',
+                confirmButtonText: 'متوجه شدم',
+                customClass: {
+                    confirmButton: 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded'
+                },
+                buttonsStyling: false
+            });
         }
     });
 
